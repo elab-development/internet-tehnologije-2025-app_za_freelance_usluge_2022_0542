@@ -1,7 +1,13 @@
 import { FastifyInstance } from "fastify";
 import { prisma } from "../prisma";
-import { authRequired, requireRole } from "../middleware/auth";
+import { auth } from "../middleware/guards";
 import { createProjectSchema } from "../utils/validation";
+import { body, params as vParams } from "../utils/validate";
+import { projectPublicSelect } from "../dto/selectors";
+import { z } from "zod";
+import { HttpError } from "../utils/http";
+
+const idParams = z.object({ id: z.string().min(1) });
 
 export async function projectRoutes(app: FastifyInstance) {
   // Public list of OPEN projects
@@ -9,56 +15,42 @@ export async function projectRoutes(app: FastifyInstance) {
     const projects = await prisma.project.findMany({
       where: { status: "OPEN" },
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        budgetMin: true,
-        budgetMax: true,
-        status: true,
-        createdAt: true,
-      },
+      select: projectPublicSelect,
     });
     return reply.send({ projects });
   });
 
-  // Public project details (NO bids here)
+  // Public project details
   app.get("/projects/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = vParams(req, idParams);
+
     const project = await prisma.project.findUnique({
       where: { id },
       select: {
-        id: true,
-        title: true,
-        description: true,
-        budgetMin: true,
-        budgetMax: true,
-        status: true,
-        createdAt: true,
+        ...projectPublicSelect,
         clientId: true,
       },
     });
-    if (!project) return reply.code(404).send({ message: "Project not found" });
+
+    if (!project) throw new HttpError(404, "Project not found");
     return reply.send({ project });
   });
 
   // Create project (CLIENT only)
   app.post(
     "/projects",
-    { preHandler: [authRequired, requireRole(["CLIENT"])] },
+    { preHandler: auth(["CLIENT"]) },
     async (req, reply) => {
-      const parsed = createProjectSchema.safeParse(req.body);
-      if (!parsed.success)
-        return reply.code(400).send({
-          message: "Validation error",
-          details: parsed.error.flatten(),
-        });
+      const input = body(req, createProjectSchema);
 
-      const user = req.user as { sub: string };
       const project = await prisma.project.create({
         data: {
-          clientId: user.sub,
-          ...parsed.data,
+          clientId: req.user.sub,
+          ...input,
+        },
+        select: {
+          ...projectPublicSelect,
+          clientId: true,
         },
       });
 
@@ -69,13 +61,14 @@ export async function projectRoutes(app: FastifyInstance) {
   // My projects (CLIENT)
   app.get(
     "/me/projects",
-    { preHandler: [authRequired, requireRole(["CLIENT"])] },
+    { preHandler: auth(["CLIENT"]) },
     async (req, reply) => {
-      const user = req.user as { sub: string };
       const projects = await prisma.project.findMany({
-        where: { clientId: user.sub },
+        where: { clientId: req.user.sub },
         orderBy: { createdAt: "desc" },
+        select: projectPublicSelect,
       });
+
       return reply.send({ projects });
     },
   );

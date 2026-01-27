@@ -45,6 +45,7 @@ model FreelancerProfile {
   bio       String?
   githubUrl String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   skills FreelancerSkill[]
@@ -78,9 +79,13 @@ model Project {
   budgetMax   Int?
   status      ProjectStatus @default(OPEN)
   createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   client User  @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
   bids   Bid[]
+
+  @@index([status])
+  @@index([clientId])
 }
 
 model Bid {
@@ -92,9 +97,12 @@ model Bid {
   coverLetter  String?
   status       BidStatus @default(PENDING)
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   freelancer User    @relation("FreelancerBids", fields: [freelancerId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, freelancerId])
+  @@index([projectId])
+  @@index([freelancerId])
 }

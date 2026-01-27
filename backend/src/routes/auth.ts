@@ -2,31 +2,27 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "../prisma";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { registerSchema, loginSchema } from "../utils/validation";
+import { body } from "../utils/validate";
+import { HttpError } from "../utils/http";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/auth/register", async (req, reply) => {
-    const parsed = registerSchema.safeParse(req.body);
-    if (!parsed.success)
-      return reply
-        .code(400)
-        .send({ message: "Validation error", details: parsed.error.flatten() });
+    const input = body(req, registerSchema);
 
-    const { email, password, role } = parsed.data;
-
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing)
-      return reply.code(409).send({ message: "Email already exists" });
+    const existing = await prisma.user.findUnique({
+      where: { email: input.email },
+    });
+    if (existing) throw new HttpError(409, "Email already exists");
 
     const user = await prisma.user.create({
       data: {
-        email,
-        passwordHash: await hashPassword(password),
-        role: role,
+        email: input.email,
+        passwordHash: await hashPassword(input.password),
+        role: input.role,
       },
       select: { id: true, email: true, role: true, createdAt: true },
     });
 
-    // Auto-create freelancer profile if freelancer
     if (user.role === "FREELANCER") {
       await prisma.freelancerProfile.create({ data: { userId: user.id } });
     }
@@ -35,19 +31,15 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.post("/auth/login", async (req, reply) => {
-    const parsed = loginSchema.safeParse(req.body);
-    if (!parsed.success)
-      return reply
-        .code(400)
-        .send({ message: "Validation error", details: parsed.error.flatten() });
+    const input = body(req, loginSchema);
 
-    const { email, password } = parsed.data;
+    const user = await prisma.user.findUnique({
+      where: { email: input.email },
+    });
+    if (!user) throw new HttpError(401, "Invalid credentials");
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return reply.code(401).send({ message: "Invalid credentials" });
-
-    const ok = await verifyPassword(password, user.passwordHash);
-    if (!ok) return reply.code(401).send({ message: "Invalid credentials" });
+    const ok = await verifyPassword(input.password, user.passwordHash);
+    if (!ok) throw new HttpError(401, "Invalid credentials");
 
     const token = app.jwt.sign({
       sub: user.id,
@@ -64,9 +56,15 @@ export async function authRoutes(app: FastifyInstance) {
   app.get("/auth/me", async (req, reply) => {
     try {
       await req.jwtVerify();
-      return reply.send({ user: req.user });
+      return reply.send({
+        user: { id: req.user.sub, email: req.user.email, role: req.user.role },
+      });
     } catch {
-      return reply.code(401).send({ message: "Unauthorized" });
+      throw new HttpError(401, "Unauthorized");
     }
+  });
+
+  app.post("/auth/logout", async (_req, reply) => {
+    return reply.send({ ok: true });
   });
 }

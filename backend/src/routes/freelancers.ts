@@ -1,18 +1,50 @@
 import { FastifyInstance } from "fastify";
 import { prisma } from "../prisma";
-import { authRequired, requireRole } from "../middleware/auth";
+import { auth } from "../middleware/guards";
+import { body as vBody, params as vParams } from "../utils/validate";
+import { HttpError } from "../utils/http";
+import { userPublicSelect } from "../dto/selectors";
 import { updateProfileSchema } from "../utils/validation";
+import { z } from "zod";
+import { splitCsv } from "../utils/normalize";
+import { addSkillToMyProfileService } from "../services/freelancers.service";
+import { query as vQuery } from "../utils/validate";
+
+const freelancerIdParams = z.object({ id: z.string().min(1) });
+
+const freelancersQuerySchema = z.object({
+  skills: z.string().optional(),
+});
+
+const addSkillSchema = z.object({
+  name: z.string().trim().min(1),
+  level: z.number().int().min(1).max(5),
+});
+
+const freelancerWithProfileSelect = {
+  ...userPublicSelect,
+  freelancerProfile: {
+    select: {
+      title: true,
+      bio: true,
+      githubUrl: true,
+      skills: {
+        select: {
+          id: true,
+          level: true,
+          skill: { select: { id: true, name: true } },
+        },
+      },
+    },
+  },
+} as const;
 
 export async function freelancerRoutes(app: FastifyInstance) {
   // List freelancers (public)
+  // Optional: ?skills=react,node,postgres
   app.get("/freelancers", async (req, reply) => {
-    const { skills } = req.query as { skills?: string };
-    const skillList = skills
-      ? skills
-          .split(",")
-          .map((s) => s.trim().toLowerCase())
-          .filter(Boolean)
-      : [];
+    const q = vQuery(req, freelancersQuerySchema);
+    const skillList = splitCsv(q.skills);
 
     const freelancers = await prisma.user.findMany({
       where: {
@@ -29,110 +61,67 @@ export async function freelancerRoutes(app: FastifyInstance) {
             }
           : {}),
       },
-      select: {
-        id: true,
-        email: true,
-        freelancerProfile: {
-          select: {
-            title: true,
-            bio: true,
-            githubUrl: true,
-            skills: { include: { skill: true } },
-          },
-        },
-      },
+      select: freelancerWithProfileSelect,
+      orderBy: { createdAt: "desc" },
     });
 
     return reply.send({ freelancers });
   });
 
-  // Get freelancer by id
+  // Get freelancer by id (public)
   app.get("/freelancers/:id", async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = vParams(req, freelancerIdParams);
 
     const freelancer = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        freelancerProfile: {
-          select: {
-            title: true,
-            bio: true,
-            githubUrl: true,
-            skills: { include: { skill: true } },
-          },
-        },
-      },
+      select: freelancerWithProfileSelect,
     });
 
-    if (!freelancer || !freelancer.freelancerProfile)
-      return reply.code(404).send({ message: "Freelancer not found" });
+    if (!freelancer || !freelancer.freelancerProfile) {
+      throw new HttpError(404, "Freelancer not found");
+    }
+
     return reply.send({ freelancer });
   });
 
   // Update my freelancer profile
   app.put(
     "/me/profile",
-    { preHandler: [authRequired, requireRole(["FREELANCER"] as any)] },
+    { preHandler: auth(["FREELANCER"]) },
     async (req, reply) => {
-      const parsed = updateProfileSchema.safeParse(req.body);
-      if (!parsed.success)
-        return reply
-          .code(400)
-          .send({
-            message: "Validation error",
-            details: parsed.error.flatten(),
-          });
-
-      const user = req.user as any;
+      const input = vBody(req, updateProfileSchema);
 
       const profile = await prisma.freelancerProfile.update({
-        where: { userId: user.sub },
-        data: parsed.data,
+        where: { userId: req.user.sub },
+        data: input,
+        select: {
+          id: true,
+          userId: true,
+          title: true,
+          bio: true,
+          githubUrl: true,
+          createdAt: true,
+        },
       });
 
       return reply.send({ profile });
     },
   );
 
-  // Add skill to my profile (creates skill if not exists)
+  // Add skill to my profile
   app.post(
     "/me/skills",
-    { preHandler: [authRequired, requireRole(["FREELANCER"] as any)] },
+    { preHandler: auth(["FREELANCER"]) },
     async (req, reply) => {
-      const user = req.user as any;
-      const body = req.body as { name: string; level: number };
+      const input = vBody(req, addSkillSchema);
 
-      if (!body?.name || !body?.level)
-        return reply.code(400).send({ message: "name and level required" });
-
-      const name = body.name.trim().toLowerCase();
-      const level = Number(body.level);
-      if (!name) return reply.code(400).send({ message: "Invalid skill name" });
-      if (!Number.isInteger(level) || level < 1 || level > 5)
-        return reply.code(400).send({ message: "level must be 1-5" });
-
-      const profile = await prisma.freelancerProfile.findUnique({
-        where: { userId: user.sub },
-      });
-      if (!profile)
-        return reply.code(404).send({ message: "Profile not found" });
-
-      const skill = await prisma.skill.upsert({
-        where: { name },
-        update: {},
-        create: { name },
+      const freelancerSkill = await addSkillToMyProfileService({
+        userId: req.user.sub,
+        name: input.name,
+        level: input.level,
       });
 
-      try {
-        const fs = await prisma.freelancerSkill.create({
-          data: { profileId: profile.id, skillId: skill.id, level },
-        });
-        return reply.code(201).send({ freelancerSkill: fs });
-      } catch {
-        return reply.code(409).send({ message: "Skill already added" });
-      }
+      return reply.code(201).send({ freelancerSkill });
     },
   );
 }
