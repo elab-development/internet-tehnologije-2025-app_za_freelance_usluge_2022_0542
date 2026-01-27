@@ -1,42 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useIsClient } from "../../../hooks/useIsClient";
 import {
   getProjectById,
   type Project,
 } from "../../../services/projects.service";
+import { useAsync } from "../../../hooks/useAsync";
 
 export function useProjectDetail(projectId: string | undefined) {
   const isClient = useIsClient();
 
-  const [project, setProject] = useState<
-    (Project & { clientId: string }) | null
-  >(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-
-  async function refresh() {
-    if (!projectId) return;
-
-    setLoading(true);
-    setErr(null);
-    try {
-      const data = await getProjectById(projectId);
-      setProject(data.project);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to load project";
-      setErr(message);
-      setProject(null);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!isClient) return;
-    void refresh();
+  const fn = useCallback(async () => {
+    if (!isClient || !projectId) return null;
+    const data = await getProjectById(projectId);
+    return data.project as Project & { clientId: string };
   }, [isClient, projectId]);
 
-  return { isClient, project, loading, err, refresh };
+  const { data, loading, error, run } = useAsync(
+    fn,
+    `${isClient}-${projectId ?? "none"}`,
+  );
+
+  async function refresh() {
+    await run();
+  }
+
+  return {
+    isClient,
+    project: data,
+    loading,
+    err: error,
+    refresh,
+  };
 }

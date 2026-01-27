@@ -4,8 +4,9 @@ import { useParams, useRouter } from "next/navigation";
 
 import Button from "../../components/Button";
 import { useMyProjectDetail } from "./hooks/useMyProjectDetail";
-import ProjectDetailsCard from "./components/ProjectDetailsCard";
+import ProjectDetailsCard from "../../components/projects/ProjectDetailsCard";
 import BidsCard from "./components/BidsCard";
+import FullPageLoader from "@/app/components/common/FullPageLoader";
 
 export default function MyProjectDetailPage() {
   const router = useRouter();
@@ -24,15 +25,7 @@ export default function MyProjectDetailPage() {
     onAccept,
   } = useMyProjectDetail(projectId);
 
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="rounded-xl border bg-white p-4 shadow-sm text-sm text-gray-700">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  if (!isClient) return <FullPageLoader />;
 
   if (!canView) return null;
 
@@ -54,7 +47,12 @@ export default function MyProjectDetailPage() {
           </div>
         </div>
 
-        <ProjectDetailsCard loading={loading} err={err} project={project} />
+        <ProjectDetailsCard
+          subtitle="Your project information"
+          loading={loading}
+          err={err}
+          project={project}
+        />
 
         <BidsCard
           loading={loading}

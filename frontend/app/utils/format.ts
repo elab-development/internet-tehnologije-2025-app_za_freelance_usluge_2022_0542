@@ -1,5 +1,3 @@
-import type { Project } from "../services/projects.service";
-
 export function formatBudget(min: number | null, max: number | null) {
   if (min == null && max == null) return "Not specified";
   if (min != null && max == null) return `From ${min}`;
@@ -7,7 +5,9 @@ export function formatBudget(min: number | null, max: number | null) {
   return `${min} - ${max}`;
 }
 
-export function formatProjectStatus(status: Project["status"]) {
+export type ProjectStatus = "OPEN" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+
+export function formatProjectStatus(status: ProjectStatus) {
   return status === "OPEN"
     ? "Open"
     : status === "IN_PROGRESS"
@@ -17,7 +17,7 @@ export function formatProjectStatus(status: Project["status"]) {
         : "Cancelled";
 }
 
-export function statusBadgeClass(status: Project["status"]) {
+export function statusBadgeClass(status: ProjectStatus) {
   return status === "OPEN"
     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
     : status === "IN_PROGRESS"

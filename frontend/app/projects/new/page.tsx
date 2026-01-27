@@ -1,12 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+
 import Card from "../../components/Card";
 import Button from "../../components/Button";
+import FullPageLoader from "../../components/common/FullPageLoader";
+import { useRequireRole } from "../../hooks/useRequireRole";
+
 import NewProjectForm from "./components/NewProjectForm";
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const { isClient, allowed: canView } = useRequireRole("CLIENT");
+
+  if (!isClient) return <FullPageLoader label="Loading..." />;
+
+  // redirect happens in hook (to /login or /dashboard)
+  if (!canView) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -20,6 +30,7 @@ export default function NewProjectPage() {
               Create a project and receive bids from freelancers.
             </p>
           </div>
+
           <Button variant="outline" onClick={() => router.push("/dashboard")}>
             Back
           </Button>

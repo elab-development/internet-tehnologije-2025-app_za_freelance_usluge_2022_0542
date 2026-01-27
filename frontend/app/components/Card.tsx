@@ -5,15 +5,31 @@ export default function Card(props: {
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  titleClassName?: string;
+  subtitleClassName?: string;
 }) {
+  const base = "w-full rounded-xl border p-6 shadow-sm bg-white text-gray-900";
+
   return (
-    <div
-      className={`w-full rounded-xl border bg-white p-6 shadow-sm ${props.className ?? ""}`}
-    >
-      <h1 className="text-2xl font-semibold">{props.title}</h1>
+    <div className={[base, props.className ?? ""].join(" ")}>
+      <h2
+        className={["text-2xl font-semibold", props.titleClassName ?? ""].join(
+          " ",
+        )}
+      >
+        {props.title}
+      </h2>
+
       {props.subtitle ? (
-        <p className="text-gray-600 mt-1">{props.subtitle}</p>
+        <p
+          className={["mt-1 text-gray-600", props.subtitleClassName ?? ""].join(
+            " ",
+          )}
+        >
+          {props.subtitle}
+        </p>
       ) : null}
+
       <div className="mt-4">{props.children}</div>
     </div>
   );

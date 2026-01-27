@@ -1,20 +1,25 @@
-import Card from "../../../components/Card";
-import type { Project } from "../../../services/projects.service";
-import { formatBudget } from "../../../utils/format";
+"use client";
 
-export default function ProjectDetailsCard({
-  loading,
-  err,
-  project,
-}: {
+import Card from "../Card";
+import type { Project } from "../../services/projects.service";
+import { formatBudget } from "../../utils/format";
+import ProjectStatusBadge from "./ProjectStatusBadge";
+import InlineNotice from "../common/InlineNotice";
+
+export default function ProjectDetailsCard(props: {
+  subtitle: string;
   loading: boolean;
   err: string | null;
   project: (Project & { clientId: string }) | null;
 }) {
+  const { subtitle, loading, err, project } = props;
+
   return (
-    <Card title="Details" subtitle="Your project information">
+    <Card title="Details" subtitle={subtitle}>
       {err ? (
-        <p className="text-sm text-red-600">{err}</p>
+        <InlineNotice variant="error" title="Failed to load">
+          {err}
+        </InlineNotice>
       ) : loading ? (
         <div className="space-y-3">
           <div className="h-6 rounded bg-gray-100 animate-pulse" />
@@ -28,16 +33,17 @@ export default function ProjectDetailsCard({
             <p className="text-lg font-semibold text-gray-900">
               {project.title}
             </p>
-            <span className="text-xs rounded-full border px-2.5 py-1 bg-gray-50 text-gray-700">
-              {project.status}
-            </span>
+            <ProjectStatusBadge status={project.status} />
           </div>
+
           <p className="text-sm text-gray-700 whitespace-pre-line">
             {project.description}
           </p>
+
           <p className="text-sm text-gray-600">
             Budget: <b>{formatBudget(project.budgetMin, project.budgetMax)}</b>
           </p>
+
           <p className="text-xs text-gray-500">
             Created: {new Date(project.createdAt).toLocaleString()}
           </p>

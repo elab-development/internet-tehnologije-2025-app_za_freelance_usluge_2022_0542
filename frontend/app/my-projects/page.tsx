@@ -6,21 +6,17 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import { useMyProjects } from "./hooks/useMyProjects";
 import MyProjectsHeader from "./components/MyProjectsHeader";
-import ProjectListItem from "./components/ProjectListItem";
+import ProjectListItem from "../components/projects/ProjectListItem";
+import FullPageLoader from "../components/common/FullPageLoader";
+
+import InlineNotice from "../components/common/InlineNotice";
+import SkeletonList from "../components/common/SkeletonList";
 
 export default function MyProjectsPage() {
   const router = useRouter();
   const { isClient, canView, projects, loading, err } = useMyProjects();
 
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="rounded-xl border bg-white p-4 shadow-sm text-sm text-gray-700">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  if (!isClient) return <FullPageLoader />;
 
   if (!canView) return null;
 
@@ -37,13 +33,11 @@ export default function MyProjectsPage() {
           subtitle={loading ? "Loading..." : `${projects.length} total`}
         >
           {err ? (
-            <p className="text-sm text-red-600">{err}</p>
+            <InlineNotice variant="error" title="Failed to load">
+              {err}
+            </InlineNotice>
           ) : loading ? (
-            <div className="space-y-3">
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-            </div>
+            <SkeletonList rows={3} rowHeightClass="h-16" />
           ) : projects.length === 0 ? (
             <div className="rounded-lg border bg-gray-50 p-4">
               <p className="text-sm text-gray-700">

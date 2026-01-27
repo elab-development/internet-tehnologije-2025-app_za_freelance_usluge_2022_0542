@@ -1,19 +1,36 @@
 "use client";
 
 import Button from "../../components/Button";
-import ProjectStatusBadge from "../../components/ProjectStatusBadge";
+import ProjectStatusBadge from "../../components/projects/ProjectStatusBadge";
 import type { Project } from "../../services/projects.service";
 import { formatBudget } from "../../utils/format";
 
-export default function ProjectListItem({
-  project,
-  ctaLabel,
-  onClick,
-}: {
-  project: Project;
-  ctaLabel: string;
-  onClick: () => void;
-}) {
+type Props =
+  | {
+      project: Project;
+      ctaLabel: string;
+      onClick: () => void;
+      onView?: never;
+    }
+  | {
+      project: Project;
+      onView: (id: string) => void;
+      ctaLabel?: string;
+      onClick?: never;
+    };
+
+export default function ProjectListItem(props: Props) {
+  const { project } = props;
+
+  const label = "ctaLabel" in props && props.ctaLabel ? props.ctaLabel : "View";
+
+  const handleClick =
+    "onClick" in props && props.onClick
+      ? props.onClick
+      : "onView" in props && props.onView
+        ? () => props.onView(project.id)
+        : undefined;
+
   return (
     <div className="rounded-xl border bg-white p-4 hover:shadow-sm transition">
       <div className="flex items-start justify-between gap-3">
@@ -36,8 +53,8 @@ export default function ProjectListItem({
         </div>
 
         <div className="shrink-0">
-          <Button variant="outline" size="sm" onClick={onClick}>
-            {ctaLabel}
+          <Button variant="outline" size="sm" onClick={handleClick}>
+            {label}
           </Button>
         </div>
       </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+
 import InputField from "../../../components/InputField";
 import Button from "../../../components/Button";
 import { createProject } from "../../../services/projects.service";
-import { useAuth } from "../../../hooks/useAuth";
-import { useRouter } from "next/navigation";
 
 function toOptionalInt(value: string): number | undefined {
   const trimmed = value.trim();
@@ -17,7 +17,6 @@ function toOptionalInt(value: string): number | undefined {
 
 export default function NewProjectForm() {
   const router = useRouter();
-  const { user, isAuthed } = useAuth();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -27,19 +26,16 @@ export default function NewProjectForm() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const canCreate = useMemo(
-    () => isAuthed && user?.role === "CLIENT",
-    [isAuthed, user?.role],
-  );
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
 
-    if (!canCreate) {
-      setErr("Only CLIENT users can create projects.");
-      return;
-    }
+    const t = title.trim();
+    const d = description.trim();
+
+    if (t.length < 3) return setErr("Title must be at least 3 characters.");
+    if (d.length < 10)
+      return setErr("Description must be at least 10 characters.");
 
     const bMin = toOptionalInt(budgetMin);
     const bMax = toOptionalInt(budgetMax);
@@ -54,8 +50,8 @@ export default function NewProjectForm() {
     setLoading(true);
     try {
       await createProject({
-        title,
-        description,
+        title: t,
+        description: d,
         budgetMin: bMin,
         budgetMax: bMax,
       });
@@ -82,7 +78,7 @@ export default function NewProjectForm() {
           Description (min 10)
         </label>
         <textarea
-          className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/20"
+          className="w-full rounded-md border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-black/20"
           rows={6}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -105,19 +101,13 @@ export default function NewProjectForm() {
         />
       </div>
 
-      {!canCreate ? (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-          You are logged in as <b>{user?.role ?? "Unknown"}</b>. Only{" "}
-          <b>CLIENT</b> users can create projects.
-        </p>
-      ) : null}
-
       {err ? <p className="text-red-600 text-sm">{err}</p> : null}
 
       <div className="flex gap-2">
-        <Button type="submit" loading={loading} disabled={!canCreate}>
+        <Button type="submit" loading={loading} disabled={loading}>
           Create project
         </Button>
+
         <Button
           type="button"
           variant="secondary"

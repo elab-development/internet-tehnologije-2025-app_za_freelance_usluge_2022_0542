@@ -10,6 +10,8 @@ type Action = {
 };
 
 export default function DashboardActions({ actions }: { actions: Action[] }) {
+  const [first, ...rest] = actions;
+
   return (
     <div className="rounded-2xl border bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
@@ -25,16 +27,30 @@ export default function DashboardActions({ actions }: { actions: Action[] }) {
         </span>
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {actions.map((a) => (
+      {first ? (
+        <div className="mt-5 rounded-2xl border border-black bg-black p-5 text-white">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{first.title}</p>
+              <p className="mt-1 text-sm text-white/80">{first.desc}</p>
+            </div>
+            <div className="shrink-0">
+              <Button onClick={first.onClick}>{first.cta}</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {rest.map((a) => (
           <div
             key={a.title}
-            className="rounded-xl border p-4 hover:shadow-sm transition"
+            className="rounded-xl border bg-white p-4 hover:shadow-sm transition"
           >
             <p className="text-sm font-semibold text-gray-900">{a.title}</p>
             <p className="mt-1 text-sm text-gray-600">{a.desc}</p>
             <div className="mt-4">
-              <Button fullWidth size="md" onClick={a.onClick}>
+              <Button fullWidth variant="outline" size="md" onClick={a.onClick}>
                 {a.cta}
               </Button>
             </div>

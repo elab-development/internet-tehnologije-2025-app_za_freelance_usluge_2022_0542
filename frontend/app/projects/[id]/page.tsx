@@ -7,8 +7,9 @@ import Button from "../../components/Button";
 import { useAuth } from "../../hooks/useAuth";
 
 import { useProjectDetail } from "./hooks/useProjectDetail";
-import ProjectDetailsCard from "./components/ProjectDetailsCard";
+import ProjectDetailsCard from "../../components/projects/ProjectDetailsCard";
 import BidFormCard from "./components/BidFormCard";
+import FullPageLoader from "@/app/components/common/FullPageLoader";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -23,15 +24,7 @@ export default function ProjectDetailPage() {
     [isAuthed, user?.role],
   );
 
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="rounded-xl border bg-white p-4 shadow-sm text-sm text-gray-700">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  if (!isClient) return <FullPageLoader />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -53,7 +46,12 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        <ProjectDetailsCard loading={loading} err={err} project={project} />
+        <ProjectDetailsCard
+          subtitle="Public project information"
+          loading={loading}
+          err={err}
+          project={project}
+        />
 
         {/* Freelancer-only bid form */}
         {projectId && isFreelancer ? (

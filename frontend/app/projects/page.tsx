@@ -9,7 +9,10 @@ import { useAuth } from "../hooks/useAuth";
 
 import { useOpenProjects } from "./hooks/useOpenProjects";
 import ProjectsHeader from "./components/ProjectsHeader";
-import ProjectListItem from "./components/ProjectListItem";
+import ProjectListItem from "../components/projects/ProjectListItem";
+import InlineNotice from "../components/common/InlineNotice";
+import SkeletonList from "../components/common/SkeletonList";
+import FullPageLoader from "../components/common/FullPageLoader";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -22,15 +25,8 @@ export default function ProjectsPage() {
     return "View";
   }, [isAuthed, user?.role]);
 
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="rounded-xl border bg-white p-4 shadow-sm text-sm text-gray-700">
-          Loading...
-        </div>
-      </div>
-    );
-  }
+  // keep your hydration guard exactly
+  if (!isClient) return <FullPageLoader />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -51,16 +47,15 @@ export default function ProjectsPage() {
           subtitle={loading ? "Loading..." : `${projects.length} available`}
         >
           {err ? (
-            <p className="text-sm text-red-600">{err}</p>
+            <InlineNotice variant="error" title="Failed to load">
+              {err}
+            </InlineNotice>
           ) : loading ? (
-            <div className="space-y-3">
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-16 rounded-lg bg-gray-100 animate-pulse" />
-            </div>
+            <SkeletonList rows={3} rowHeightClass="h-16" />
           ) : projects.length === 0 ? (
             <div className="rounded-lg border bg-gray-50 p-4">
               <p className="text-sm text-gray-700">No open projects yet.</p>
+
               {user?.role === "CLIENT" ? (
                 <div className="mt-3">
                   <Button onClick={() => router.push("/projects/new")}>

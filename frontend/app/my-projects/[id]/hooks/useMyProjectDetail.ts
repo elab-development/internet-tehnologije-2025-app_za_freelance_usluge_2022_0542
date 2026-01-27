@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
-import { useAuth } from "../../../hooks/useAuth";
 import { useIsClient } from "../../../hooks/useIsClient";
+import { useRequireRole } from "../../../hooks/useRequireRole";
+import { useAsync } from "../../../hooks/useAsync";
+
 import {
   getProjectById,
   type Project,
@@ -16,62 +17,37 @@ import {
 } from "../../../services/bid.service";
 
 export function useMyProjectDetail(projectId: string | undefined) {
-  const router = useRouter();
-  const { user, isAuthed } = useAuth();
   const isClient = useIsClient();
+  const { allowed: canView } = useRequireRole("CLIENT");
 
-  const canView = useMemo(
-    () => isAuthed && user?.role === "CLIENT",
-    [isAuthed, user?.role],
+  const fetcher = useCallback(async () => {
+    if (!isClient || !canView || !projectId) {
+      return {
+        project: null as (Project & { clientId: string }) | null,
+        bids: [] as Bid[],
+      };
+    }
+
+    const p = await getProjectById(projectId);
+    const b = await getBidsForProject(projectId);
+
+    return {
+      project: p.project as Project & { clientId: string },
+      bids: b.bids,
+    };
+  }, [isClient, canView, projectId]);
+
+  const { data, loading, error, run } = useAsync(
+    fetcher,
+    `${isClient}-${canView}-${projectId ?? "none"}`,
   );
-
-  const [project, setProject] = useState<
-    (Project & { clientId: string }) | null
-  >(null);
-  const [bids, setBids] = useState<Bid[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
 
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
 
   async function refresh() {
-    if (!projectId) return;
-
-    setLoading(true);
-    setErr(null);
-    try {
-      const p = await getProjectById(projectId);
-      setProject(p.project);
-
-      const b = await getBidsForProject(projectId);
-      setBids(b.bids);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to load project";
-      setErr(message);
-      setProject(null);
-      setBids([]);
-    } finally {
-      setLoading(false);
-    }
+    await run();
   }
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    if (!isAuthed) {
-      router.push("/login");
-      return;
-    }
-
-    if (user?.role !== "CLIENT") {
-      router.push("/dashboard");
-      return;
-    }
-
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isClient, isAuthed, user?.role, projectId]);
 
   async function onAccept(bidId: string) {
     setActionErr(null);
@@ -89,11 +65,11 @@ export function useMyProjectDetail(projectId: string | undefined) {
 
   return {
     isClient,
-    canView,
-    project,
-    bids,
+    canView, // same prop your page expects
+    project: data?.project ?? null,
+    bids: data?.bids ?? [],
     loading,
-    err,
+    err: error,
     actionErr,
     acceptingId,
     onAccept,

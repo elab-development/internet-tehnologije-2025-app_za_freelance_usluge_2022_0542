@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Card from "../../../components/Card";
@@ -10,70 +10,95 @@ import InputField from "../../../components/InputField";
 import { useAuth } from "../../../hooks/useAuth";
 import { createBid } from "../../../services/bid.service";
 
-function toIntOrNull(value: string): number | null {
+function toPositiveIntOrNull(value: string): number | null {
   const t = value.trim();
   if (!t) return null;
   const n = Number(t);
   if (!Number.isFinite(n)) return null;
-  return Math.trunc(n);
+  const i = Math.trunc(n);
+  return i > 0 ? i : null;
 }
 
 export default function BidFormCard({ projectId }: { projectId: string }) {
   const router = useRouter();
   const { user, isAuthed } = useAuth();
 
-  const canBid = useMemo(
-    () => isAuthed && user?.role === "FREELANCER",
-    [isAuthed, user?.role],
-  );
+  const isFreelancer = isAuthed && user?.role === "FREELANCER";
 
   const [price, setPrice] = useState("");
   const [deadlineDays, setDeadlineDays] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
-  const [bidErr, setBidErr] = useState<string | null>(null);
-  const [bidLoading, setBidLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  async function onSubmitBid(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setBidErr(null);
+    setErr(null);
 
-    if (!canBid) {
+    if (!isAuthed) {
       router.push("/login");
       return;
     }
 
-    const p = toIntOrNull(price);
-    const d = toIntOrNull(deadlineDays);
+    if (!isFreelancer) {
+      setErr("Only FREELANCER users can place bids.");
+      return;
+    }
 
-    if (p == null || p < 1)
-      return setBidErr("Price must be a positive integer.");
-    if (d == null || d < 1)
-      return setBidErr("Deadline days must be a positive integer.");
+    const p = toPositiveIntOrNull(price);
+    const d = toPositiveIntOrNull(deadlineDays);
 
-    setBidLoading(true);
+    if (p == null) return setErr("Price must be a positive integer.");
+    if (d == null) return setErr("Deadline days must be a positive integer.");
+
+    setLoading(true);
     try {
       await createBid(projectId, {
         price: p,
         deadlineDays: d,
         coverLetter: coverLetter.trim() ? coverLetter.trim() : undefined,
       });
-      router.push("/projects");
+      router.push("/my-bids");
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Bid failed";
-      setBidErr(message);
+      setErr(message);
     } finally {
-      setBidLoading(false);
+      setLoading(false);
     }
   }
 
-  if (!canBid) {
-    // Bitno: freelancer je ulogovan ali ne može? onda je role problem.
-    return null;
+  // Not authed → show CTA instead of hiding everything
+  if (!isAuthed) {
+    return (
+      <Card
+        title="Place a bid"
+        subtitle="Login as a freelancer to submit a bid."
+      >
+        <Button onClick={() => router.push("/login")}>Login to bid</Button>
+      </Card>
+    );
   }
 
+  // Authed but wrong role → show message (don’t hide the whole card)
+  if (!isFreelancer) {
+    return (
+      <Card title="Place a bid" subtitle="Only freelancers can submit bids.">
+        <p className="text-sm text-gray-700">
+          You are logged in as <b>{user?.role ?? "Unknown"}</b>.
+        </p>
+        <div className="mt-3">
+          <Button variant="outline" onClick={() => router.push("/dashboard")}>
+            Back to dashboard
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Freelancer → show form
   return (
     <Card title="Place a bid" subtitle="Compete on price and deadline.">
-      <form onSubmit={onSubmitBid} className="space-y-3">
+      <form onSubmit={onSubmit} className="space-y-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <InputField
             label="Price (RSD)"
@@ -94,7 +119,7 @@ export default function BidFormCard({ projectId }: { projectId: string }) {
             Cover letter (optional)
           </label>
           <textarea
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/20"
+            className="w-full rounded-md border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-black/20"
             rows={4}
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
@@ -102,21 +127,21 @@ export default function BidFormCard({ projectId }: { projectId: string }) {
           />
         </div>
 
-        {bidErr ? <p className="text-sm text-red-600">{bidErr}</p> : null}
+        {err ? <p className="text-sm text-red-600">{err}</p> : null}
 
         <div className="flex gap-2">
-          <Button type="submit" loading={bidLoading}>
+          <Button type="submit" loading={loading} disabled={loading}>
             Submit bid
           </Button>
           <Button
             type="button"
             variant="secondary"
-            disabled={bidLoading}
+            disabled={loading}
             onClick={() => {
               setPrice("");
               setDeadlineDays("");
               setCoverLetter("");
-              setBidErr(null);
+              setErr(null);
             }}
           >
             Clear

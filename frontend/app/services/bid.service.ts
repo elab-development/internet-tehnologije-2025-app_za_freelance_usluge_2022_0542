@@ -39,10 +39,8 @@ export async function getBidsForProject(projectId: string) {
 }
 
 export async function acceptBid(bidId: string) {
-  // IMPORTANT: api.ts sets Content-Type: application/json, so body must not be empty
   return apiFetch(`/bids/${bidId}/accept`, {
     method: "POST",
-    body: JSON.stringify({}),
   });
 }
 
