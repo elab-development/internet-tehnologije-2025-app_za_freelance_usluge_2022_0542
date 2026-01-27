@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FREELANCER
+  CLIENT
+  ADMIN
+}
+
+enum ProjectStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+
+  freelancerProfile FreelancerProfile?
+  clientProjects    Project[] @relation("ClientProjects")
+  bids              Bid[]     @relation("FreelancerBids")
+}
+
+model FreelancerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  title     String?
+  bio       String?
+  githubUrl String?
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills FreelancerSkill[]
+}
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  freelancers FreelancerSkill[]
+}
+
+model FreelancerSkill {
+  id        String @id @default(cuid())
+  profileId String
+  skillId   String
+  level     Int
+
+  profile FreelancerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill   Skill             @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, skillId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  clientId    String
+  title       String
+  description String
+  budgetMin   Int?
+  budgetMax   Int?
+  status      ProjectStatus @default(OPEN)
+  createdAt   DateTime      @default(now())
+
+  client User  @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  bids   Bid[]
+}
+
+model Bid {
+  id           String    @id @default(cuid())
+  projectId    String
+  freelancerId String
+  price        Int
+  deadlineDays Int
+  coverLetter  String?
+  status       BidStatus @default(PENDING)
+  createdAt    DateTime  @default(now())
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  freelancer User    @relation("FreelancerBids", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, freelancerId])
+}
