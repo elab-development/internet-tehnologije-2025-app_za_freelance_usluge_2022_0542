@@ -10,20 +10,15 @@ import Button from "../components/Button";
 import { register } from "../services/auth.service";
 
 export default function RegisterPage() {
-  // Routing zahtev: programatska navigacija (/login nakon registracije)
   const router = useRouter();
 
-  // React hooks zahtev: kontrolisani inputi + UI stanje (loading/error)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Backend zahtev (tipovi korisnika): bira se uloga CLIENT ili FREELANCER
   const [role, setRole] = useState<"FREELANCER" | "CLIENT">("CLIENT");
 
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Funkcionalnost: POST /auth/register, obrada uspeha i greške
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
@@ -41,51 +36,60 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card title="Register" subtitle="Create an account">
-        <form onSubmit={onSubmit} className="space-y-3">
-          <InputField label="Email" value={email} onChange={setEmail} />
-          <InputField
-            label="Password (min 6)"
-            type="password"
-            value={password}
-            onChange={setPassword}
-          />
+    <div className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
+      <div className="mx-auto w-full max-w-md">
+        <Card title="Register" subtitle="Create an account">
+          <form onSubmit={onSubmit} className="space-y-4">
+            <InputField label="Email" value={email} onChange={setEmail} />
+            <InputField
+              label="Password (min 6)"
+              type="password"
+              value={password}
+              onChange={setPassword}
+            />
 
-          {/* Role izbor: utiče na role-based funkcionalnosti kroz sajt */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Role</label>
-            <select
-              className="w-full rounded-md border px-3 py-2"
-              value={role}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "CLIENT" || value === "FREELANCER") {
-                  setRole(value);
-                }
-              }}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Role</label>
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                value={role}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "CLIENT" || value === "FREELANCER") {
+                    setRole(value);
+                  }
+                }}
+              >
+                <option value="CLIENT">Client</option>
+                <option value="FREELANCER">Freelancer</option>
+              </select>
+            </div>
+
+            {err ? (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                {err}
+              </p>
+            ) : null}
+
+            <Button
+              type="submit"
+              fullWidth
+              disabled={loading}
+              loading={loading}
             >
-              <option value="CLIENT">Client</option>
-              <option value="FREELANCER">Freelancer</option>
-            </select>
-          </div>
+              Register
+            </Button>
 
-          {err ? <p className="text-red-600 text-sm">{err}</p> : null}
-
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? "Loading..." : "Register"}
-          </Button>
-
-          {/* Routing: link ka login-u */}
-          <button
-            type="button"
-            className="text-sm underline"
-            onClick={() => router.push("/login")}
-          >
-            Back to login
-          </button>
-        </form>
-      </Card>
+            <button
+              type="button"
+              className="w-full text-center text-sm underline underline-offset-4 hover:opacity-80"
+              onClick={() => router.push("/login")}
+            >
+              Back to login
+            </button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

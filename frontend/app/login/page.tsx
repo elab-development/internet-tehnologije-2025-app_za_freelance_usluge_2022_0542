@@ -43,32 +43,38 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card title="Login" subtitle="Sign in to continue">
-        <form onSubmit={onSubmit} className="space-y-3">
-          <InputField label="Email" value={email} onChange={setEmail} />
-          <InputField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-          />
+    <div className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6">
+      <div className="mx-auto w-full max-w-md">
+        <Card title="Login" subtitle="Sign in to continue">
+          <form onSubmit={onSubmit} className="space-y-4">
+            <InputField label="Email" value={email} onChange={setEmail} />
+            <InputField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+            />
 
-          {err ? <p className="text-red-600 text-sm">{err}</p> : null}
+            {err ? (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                {err}
+              </p>
+            ) : null}
 
-          <Button type="submit" fullWidth loading={loading}>
-            Login
-          </Button>
+            <Button type="submit" fullWidth loading={loading}>
+              Login
+            </Button>
 
-          <button
-            type="button"
-            className="text-sm underline"
-            onClick={() => router.push("/register")}
-          >
-            Create account
-          </button>
-        </form>
-      </Card>
+            <button
+              type="button"
+              className="w-full text-center text-sm underline underline-offset-4 hover:opacity-80"
+              onClick={() => router.push("/register")}
+            >
+              Create account
+            </button>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
