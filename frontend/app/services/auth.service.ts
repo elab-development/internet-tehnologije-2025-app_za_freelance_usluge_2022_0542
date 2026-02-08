@@ -1,5 +1,10 @@
 import { apiFetch } from "./api";
 
+/**
+ * Autentifikacione rute – ispunjava backend zahtev:
+ * login / register
+ */
+
 export async function register(
   email: string,
   password: string,

@@ -17,19 +17,25 @@ import NextStepsCard from "./components/NextStepsCard";
 
 export default function DashboardPage() {
   const router = useRouter();
+
+  // Auth + role (tipovi korisnika): koristi se za role-based UI i logout
   const { user, isAuthed, logout } = useAuth();
+
+  // Next/SSR: čekamo klijentski render pre pristupa user/session stanju
   const isClient = useIsClient();
 
+  // Zaštita rute: dashboard nije dostupan bez login-a
   useEffect(() => {
     if (isClient && !isAuthed) router.push("/login");
   }, [isClient, isAuthed, router]);
 
+  // Pomoćna akcija (dodatna funkcionalnost): otvara health endpoint
   const openHealth = useMemo(
     () => () => window.open("http://localhost:4000/health", "_blank"),
     [],
   );
 
-  // Keep nav object stable-ish
+  // Prosleđivanje navigacije u hook koji generiše dashboard akcije
   const nav = useMemo(
     () => ({
       push: (path: string) => router.push(path),
@@ -38,11 +44,13 @@ export default function DashboardPage() {
     [router, openHealth],
   );
 
+  // Funkcionalnost: akcije se formiraju na osnovu role korisnika
   const actions = useDashboardActions(user, nav);
 
   if (!isClient) return <FullPageLoader label="Loading dashboard..." />;
   if (!user) return null;
 
+  // Role-based CTA: različite rute zavisno od tipa korisnika
   const primaryCta = () => {
     if (user.role === "CLIENT") router.push("/projects/new");
     else if (user.role === "FREELANCER") router.push("/projects");
@@ -61,6 +69,7 @@ export default function DashboardPage() {
         user={user}
         onExplore={() => router.push("/projects")}
         onLogout={() => {
+          // Logout: briše sesiju, zatim preusmerava na login
           logout();
           router.push("/login");
         }}

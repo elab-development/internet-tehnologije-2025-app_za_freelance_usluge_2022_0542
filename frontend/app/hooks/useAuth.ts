@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+/**
+ * Tipovi korisnika – ispunjava backend zahtev
+ * (najmanje 3 tipa korisnika)
+ */
 export type Role = "FREELANCER" | "CLIENT" | "ADMIN";
 
 export type StoredUser = {
@@ -15,6 +19,7 @@ export type AuthState = {
   user: StoredUser | null;
 };
 
+// Učitavanje sesije iz localStorage (posle refresh-a)
 function readAuthFromStorage(): AuthState {
   if (typeof window === "undefined") return { token: null, user: null };
 
@@ -33,15 +38,23 @@ function readAuthFromStorage(): AuthState {
   return { token, user };
 }
 
+/**
+ * Custom hook za autentifikaciju (frontend deo).
+ * Koristi se za:
+ * - proveru da li je korisnik ulogovan
+ * - role-based prikaz funkcionalnosti
+ */
 export function useAuth() {
   const [auth, setAuth] = useState<AuthState>(() => readAuthFromStorage());
 
+  // Poziva se nakon uspešnog login/register
   function setSession(token: string, user: StoredUser) {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     setAuth({ token, user });
   }
 
+  // Logout – brisanje sesije
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");

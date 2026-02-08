@@ -2,28 +2,38 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
 import Card from "../components/Card";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
+
 import { register } from "../services/auth.service";
 
 export default function RegisterPage() {
+  // Routing zahtev: programatska navigacija (/login nakon registracije)
   const router = useRouter();
+
+  // React hooks zahtev: kontrolisani inputi + UI stanje (loading/error)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Backend zahtev (tipovi korisnika): bira se uloga CLIENT ili FREELANCER
   const [role, setRole] = useState<"FREELANCER" | "CLIENT">("CLIENT");
+
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Funkcionalnost: POST /auth/register, obrada uspeha i greške
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setLoading(true);
+
     try {
       await register(email, password, role);
       router.push("/login");
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Register failed";
+      const message = e instanceof Error ? e.message : "Registracija neuspešna";
       setErr(message);
     } finally {
       setLoading(false);
@@ -41,6 +51,8 @@ export default function RegisterPage() {
             value={password}
             onChange={setPassword}
           />
+
+          {/* Role izbor: utiče na role-based funkcionalnosti kroz sajt */}
           <div className="space-y-1">
             <label className="text-sm font-medium">Role</label>
             <select
@@ -57,10 +69,14 @@ export default function RegisterPage() {
               <option value="FREELANCER">Freelancer</option>
             </select>
           </div>
+
           {err ? <p className="text-red-600 text-sm">{err}</p> : null}
+
           <Button type="submit" fullWidth disabled={loading}>
             {loading ? "Loading..." : "Register"}
           </Button>
+
+          {/* Routing: link ka login-u */}
           <button
             type="button"
             className="text-sm underline"

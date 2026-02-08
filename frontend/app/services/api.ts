@@ -1,3 +1,11 @@
+/**
+ * Centralizovana komunikacija sa backendom.
+ * Ispunjava zahtev:
+ * - REST API
+ * - JSON odgovori i greške
+ * - zaštićene rute (Authorization header)
+ */
+
 export function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
@@ -23,20 +31,21 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     ...(extraHeaders as Record<string, string>),
   };
 
-  // Set JSON content-type ONLY if we actually send a body
+  // Content-Type se dodaje samo ako se šalje body
   const sendBody = hasBody(options.method, options.body);
   if (sendBody && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
 
+  // Token se automatski dodaje za zaštićene backend rute
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${base}${path}`, { ...options, headers });
 
-  // Some endpoints might return 204 No Content
   const text = await res.text();
   const data = text ? JSON.parse(text) : {};
 
+  // Backend greške se prosleđuju frontend-u kao Error
   if (!res.ok) {
     throw new Error(
       (data as { message?: string })?.message || "Request failed",

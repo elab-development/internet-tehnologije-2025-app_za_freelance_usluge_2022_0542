@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
 import Card from "../components/Card";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
+
 import { login } from "../services/auth.service";
 import { useAuth } from "../hooks/useAuth";
 
+/**
+ * Login stranica:
+ * - jedna od 3 različite stranice
+ * - koristi reusable komponente
+ * - implementira autentifikaciju korisnika
+ */
 export default function LoginPage() {
   const router = useRouter();
   const { setSession } = useAuth();
@@ -21,12 +29,13 @@ export default function LoginPage() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
+
     try {
       const data = await login(email, password);
       setSession(data.token, data.user);
       router.push("/dashboard");
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Login failed";
+      const message = e instanceof Error ? e.message : "Login neuspešan";
       setErr(message);
     } finally {
       setLoading(false);
@@ -44,7 +53,9 @@ export default function LoginPage() {
             value={password}
             onChange={setPassword}
           />
+
           {err ? <p className="text-red-600 text-sm">{err}</p> : null}
+
           <Button type="submit" fullWidth loading={loading}>
             Login
           </Button>

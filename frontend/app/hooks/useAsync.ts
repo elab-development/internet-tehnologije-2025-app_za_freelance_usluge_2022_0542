@@ -2,12 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+/**
+ * Zajedničko stanje za asinhrone operacije:
+ * data – rezultat sa API-ja
+ * loading – da li je zahtev u toku
+ * error – poruka greške
+ */
 type AsyncState<T> = {
   data: T | null;
   loading: boolean;
   error: string | null;
 };
 
+/**
+ * Custom hook koji ispunjava zahtev:
+ * - korišćenje React hook-ova
+ * - realna funkcionalnost (rad sa API-jem)
+ *
+ * Koristi se za učitavanje podataka i refresh nakon akcija.
+ */
 export function useAsync<T>(fn: () => Promise<T>, key?: string) {
   const [state, setState] = useState<AsyncState<T>>({
     data: null,
@@ -15,6 +28,7 @@ export function useAsync<T>(fn: () => Promise<T>, key?: string) {
     error: null,
   });
 
+  // Sprečava da stari API odgovor pregazi noviji
   const runId = useRef(0);
 
   const run = useCallback(async () => {
@@ -28,18 +42,16 @@ export function useAsync<T>(fn: () => Promise<T>, key?: string) {
       return result;
     } catch (e: unknown) {
       if (id !== runId.current) return null;
-      const message = e instanceof Error ? e.message : "Request failed";
+      const message =
+        e instanceof Error ? e.message : "Greška prilikom zahteva";
       setState({ data: null, loading: false, error: message });
       return null;
     }
   }, [fn]);
 
+  // Automatsko učitavanje (npr. na promenu rute ili parametra)
   useEffect(() => {
-    // eslint plugin complains about sync setState triggered from effects.
-    // Scheduling into a microtask avoids “sync within effect body”.
-    queueMicrotask(() => {
-      void run();
-    });
+    void run();
   }, [run, key]);
 
   return { ...state, run };
