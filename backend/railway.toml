@@ -2,6 +2,9 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
+[service]
+name = "freelance-backend"
+
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 30
