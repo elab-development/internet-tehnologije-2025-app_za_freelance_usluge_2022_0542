@@ -44,7 +44,7 @@ export default function BidsCard({
             const acceptDisabled =
               project?.status !== "OPEN" ||
               b.status !== "PENDING" ||
-              acceptingId === b.id;
+              acceptingId !== null;
 
             return (
               <div key={b.id} className="rounded-xl border bg-white p-4">

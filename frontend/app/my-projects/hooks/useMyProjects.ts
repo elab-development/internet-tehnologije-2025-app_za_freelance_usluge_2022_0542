@@ -2,15 +2,13 @@
 
 import { useCallback } from "react";
 
-import { useIsClient } from "../../hooks/useIsClient";
 import { useRequireRole } from "../../hooks/useRequireRole";
 import { useAsync } from "../../hooks/useAsync";
 
 import { getMyProjects, type Project } from "../../services/projects.service";
 
 export function useMyProjects() {
-  const isClient = useIsClient();
-  const { allowed: canView } = useRequireRole("CLIENT");
+  const { isClient, allowed: canView } = useRequireRole("CLIENT");
 
   const fetcher = useCallback(async () => {
     if (!isClient || !canView) return [] as Project[];

@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 
-import { useIsClient } from "../../../hooks/useIsClient";
 import { useRequireRole } from "../../../hooks/useRequireRole";
 import { useAsync } from "../../../hooks/useAsync";
 
@@ -17,8 +16,7 @@ import {
 } from "../../../services/bid.service";
 
 export function useMyProjectDetail(projectId: string | undefined) {
-  const isClient = useIsClient();
-  const { allowed: canView } = useRequireRole("CLIENT");
+  const { isClient, allowed: canView } = useRequireRole("CLIENT");
 
   const fetcher = useCallback(async () => {
     if (!isClient || !canView || !projectId) {

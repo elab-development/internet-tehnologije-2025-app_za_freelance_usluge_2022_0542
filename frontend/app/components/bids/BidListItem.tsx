@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 
 import Button from "../Button";
@@ -14,10 +14,7 @@ export default function BidListItem({ bid }: { bid: Bid }) {
   const projectTitle = bid.project?.title ?? "Unknown project";
   const projectStatus = bid.project?.status ?? null;
 
-  const created = useMemo(
-    () => new Date(bid.createdAt).toLocaleString(),
-    [bid.createdAt],
-  );
+  const created = new Date(bid.createdAt).toLocaleString();
 
   return (
     <div className="rounded-xl border bg-white p-4 hover:shadow-sm transition">
@@ -54,7 +51,7 @@ export default function BidListItem({ bid }: { bid: Bid }) {
             size="sm"
             variant="outline"
             onClick={() => {
-              if (bid.projectId) router.push(`/projects/${bid.projectId}`);
+              router.push(`/projects/${bid.projectId}`);
             }}
           >
             View project

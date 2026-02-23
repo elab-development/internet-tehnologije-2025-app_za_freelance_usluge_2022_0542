@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Card from "../components/Card";
@@ -8,9 +8,17 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 
 import { register } from "../services/auth.service";
+import { useAuth } from "../hooks/useAuth";
+import { useIsClient } from "../hooks/useIsClient";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { isAuthed } = useAuth();
+  const isClient = useIsClient();
+
+  useEffect(() => {
+    if (isClient && isAuthed) router.replace("/dashboard");
+  }, [isClient, isAuthed, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

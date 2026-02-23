@@ -12,7 +12,7 @@ export default function NextStepsCard(props: {
   const { role, onProjects, onNewProject, onProfile } = props;
 
   return (
-    <Card title="Next steps" subtitle="Collapse this when showing the app.">
+    <Card title="Next steps" subtitle="Application flow checklist.">
       <details className="group">
         <summary className="cursor-pointer text-sm font-medium text-gray-900">
           Show checklist

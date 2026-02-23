@@ -5,6 +5,7 @@ import type { Project } from "../../services/projects.service";
 import { formatBudget } from "../../utils/format";
 import ProjectStatusBadge from "./ProjectStatusBadge";
 import InlineNotice from "../common/InlineNotice";
+import { useExchangeRate, rsdToEur } from "../../hooks/useExchangeRate";
 
 export default function ProjectDetailsCard(props: {
   subtitle: string;
@@ -13,6 +14,7 @@ export default function ProjectDetailsCard(props: {
   project: (Project & { clientId: string }) | null;
 }) {
   const { subtitle, loading, err, project } = props;
+  const { eurRate } = useExchangeRate();
 
   return (
     <Card title="Details" subtitle={subtitle}>
@@ -41,7 +43,17 @@ export default function ProjectDetailsCard(props: {
           </p>
 
           <p className="text-sm text-gray-600">
-            Budget: <b>{formatBudget(project.budgetMin, project.budgetMax)}</b>
+            Budget:{" "}
+            <b>{formatBudget(project.budgetMin, project.budgetMax)} RSD</b>
+            {eurRate && project.budgetMin != null ? (
+              <span className="ml-2 text-gray-400">
+                (~{rsdToEur(project.budgetMin, eurRate)}
+                {project.budgetMax != null
+                  ? `–${rsdToEur(project.budgetMax, eurRate)}`
+                  : "+"}{" "}
+                EUR)
+              </span>
+            ) : null}
           </p>
 
           <p className="text-xs text-gray-500">

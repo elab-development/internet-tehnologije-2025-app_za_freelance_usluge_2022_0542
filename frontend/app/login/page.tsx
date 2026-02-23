@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import Card from "../components/Card";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 
+import { useEffect } from "react";
 import { login } from "../services/auth.service";
 import { useAuth } from "../hooks/useAuth";
+import { useIsClient } from "../hooks/useIsClient";
 
 /**
  * Login stranica:
@@ -18,7 +20,12 @@ import { useAuth } from "../hooks/useAuth";
  */
 export default function LoginPage() {
   const router = useRouter();
-  const { setSession } = useAuth();
+  const { setSession, isAuthed } = useAuth();
+  const isClient = useIsClient();
+
+  useEffect(() => {
+    if (isClient && isAuthed) router.replace("/dashboard");
+  }, [isClient, isAuthed, router]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

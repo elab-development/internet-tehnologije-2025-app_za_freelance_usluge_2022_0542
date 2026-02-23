@@ -53,4 +53,6 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
 
   return data;
+
+  // apiFetch uzme rutu i opcije → napravi pun URL → doda Content-Type ako treba → doda token ako postoji → uradi fetch → pročita odgovor → parsira JSON → ako nije 2xx baci Error → inače vrati podatke
 }

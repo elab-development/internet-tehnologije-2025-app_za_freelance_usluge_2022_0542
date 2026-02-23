@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import Button from "../../components/Button";
@@ -19,10 +18,7 @@ export default function ProjectDetailPage() {
   const { user, isAuthed } = useAuth();
   const { isClient, project, loading, err } = useProjectDetail(projectId);
 
-  const isFreelancer = useMemo(
-    () => isAuthed && user?.role === "FREELANCER",
-    [isAuthed, user?.role],
-  );
+  const isFreelancer = isAuthed && user?.role === "FREELANCER";
 
   if (!isClient) return <FullPageLoader />;
 

@@ -21,7 +21,7 @@ export default function MyBidsPage() {
   if (!isClient) return <FullPageLoader />;
 
   // redirect happens in hook
-  if (!canView) return null;
+  if (!canView) return <FullPageLoader label="Redirecting..." />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

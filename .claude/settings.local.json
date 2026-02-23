@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:\\\\Users\\\\Korisnik\\\\Desktop\\\\Faks\\\\Iteh\\\\freelance-app2\\\\frontend\\\\app\"\" | grep -E \"^d \")",
+      "Bash(git checkout:*)",
+      "Bash(npm install)",
+      "Bash(npm test:*)"
+    ]
+  }
+}

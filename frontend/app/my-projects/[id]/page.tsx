@@ -27,7 +27,7 @@ export default function MyProjectDetailPage() {
 
   if (!isClient) return <FullPageLoader />;
 
-  if (!canView) return null;
+  if (!canView) return <FullPageLoader label="Redirecting..." />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

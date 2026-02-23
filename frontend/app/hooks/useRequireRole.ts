@@ -28,12 +28,12 @@ export function useRequireRole(required: Role | Role[], opts: Options = {}) {
     if (!isClient) return;
 
     if (!isAuthed) {
-      router.push(opts.redirectToLogin ?? "/login");
+      router.replace(opts.redirectToLogin ?? "/login");
       return;
     }
 
     if (!user?.role || !roles.includes(user.role)) {
-      router.push(opts.redirectToDashboard ?? "/dashboard");
+      router.replace(opts.redirectToDashboard ?? "/dashboard");
     }
   }, [
     isClient,

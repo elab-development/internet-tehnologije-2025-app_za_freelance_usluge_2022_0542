@@ -7,13 +7,13 @@ import FullPageLoader from "../components/common/FullPageLoader";
 import DashboardActions from "../components/dashboard/DashboardActions";
 
 import { useAuth } from "../hooks/useAuth";
-import { useIsClient } from "../hooks/useIsClient";
 
 import { useDashboardActions } from "./hooks/useDashboardActions";
 import DashboardTopBar from "./components/DashboardTopBar";
 import DashboardHeroCard from "./components/DashboardHeroCard";
 import DashboardStatsRow from "./components/DashboardStatsRow";
 import NextStepsCard from "./components/NextStepsCard";
+import StatsCharts from "../components/dashboard/StatsCharts";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -21,13 +21,9 @@ export default function DashboardPage() {
   // Auth + role (tipovi korisnika): koristi se za role-based UI i logout
   const { user, isAuthed, logout } = useAuth();
 
-  // Next/SSR: čekamo klijentski render pre pristupa user/session stanju
-  const isClient = useIsClient();
-
-  // Zaštita rute: dashboard nije dostupan bez login-a
   useEffect(() => {
-    if (isClient && !isAuthed) router.push("/login");
-  }, [isClient, isAuthed, router]);
+    if (!isAuthed) router.replace("/login");
+  }, [isAuthed, router]);
 
   // Pomoćna akcija (dodatna funkcionalnost): otvara health endpoint
   const openHealth = useMemo(
@@ -47,8 +43,8 @@ export default function DashboardPage() {
   // Funkcionalnost: akcije se formiraju na osnovu role korisnika
   const actions = useDashboardActions(user, nav);
 
-  if (!isClient) return <FullPageLoader label="Loading dashboard..." />;
-  if (!user) return null;
+  if (!isAuthed) return <FullPageLoader label="Redirecting..." />;
+  if (!user) return <FullPageLoader label="Loading user..." />;
 
   // Role-based CTA: različite rute zavisno od tipa korisnika
   const primaryCta = () => {
@@ -85,6 +81,8 @@ export default function DashboardPage() {
         <DashboardStatsRow user={user} />
 
         <DashboardActions actions={actions} />
+
+        <StatsCharts />
 
         <NextStepsCard
           role={user.role}
