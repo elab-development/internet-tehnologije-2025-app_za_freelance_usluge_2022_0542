@@ -8,10 +8,12 @@ type Role = "CLIENT" | "FREELANCER" | "ADMIN";
 
 export default function DashboardTopBar(props: {
   user: StoredUser;
+  role?: string;
   onExplore: () => void;
+  onProfile?: () => void;
   onLogout: () => void;
 }) {
-  const { user, onExplore, onLogout } = props;
+  const { user, role, onExplore, onProfile, onLogout } = props;
 
   return (
     <div className="border-b bg-white">
@@ -32,6 +34,11 @@ export default function DashboardTopBar(props: {
         </div>
 
         <div className="flex items-center gap-2">
+          {role === "FREELANCER" && onProfile ? (
+            <Button variant="outline" onClick={onProfile}>
+              My Profile
+            </Button>
+          ) : null}
           <Button variant="outline" onClick={onExplore}>
             Explore
           </Button>

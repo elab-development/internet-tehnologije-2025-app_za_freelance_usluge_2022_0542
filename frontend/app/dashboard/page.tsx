@@ -63,7 +63,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardTopBar
         user={user}
+        role={user.role}
         onExplore={() => router.push("/projects")}
+        onProfile={() => router.push("/me/profile")}
         onLogout={() => {
           // Logout: briše sesiju, zatim preusmerava na login
           logout();
