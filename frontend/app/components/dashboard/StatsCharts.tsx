@@ -51,13 +51,13 @@ export default function StatsCharts() {
     );
   }
 
-  const projectData = Object.entries(stats.projects.byStatus).map(
-    ([status, count]) => ({ name: status, value: count })
-  );
+  const projectData = Object.entries(stats.projects.byStatus)
+    .map(([status, count]) => ({ name: status, value: count }))
+    .filter((e) => e.value > 0);
 
-  const bidData = Object.entries(stats.bids.byStatus).map(
-    ([status, count]) => ({ name: status, value: count })
-  );
+  const bidData = Object.entries(stats.bids.byStatus)
+    .map(([status, count]) => ({ name: status, value: count }))
+    .filter((e) => e.value > 0);
 
   const hasProjectData = stats.projects.total > 0;
   const hasBidData = stats.bids.total > 0;
